@@ -26,8 +26,8 @@ export BORG_HOST_ID="${SALVAGE_MACHINE_NAME}-${SALVAGE_CRANE_NAME}-${SALVAGE_VOL
 # user config
 assertIsSet "ENCRYPTION"
 assertIsSet "REPO_BASE_LOCATION"
-assertIsSet "PRUNE_OPTS"
 assertIsSet "SINGLE_REPO"
+assertIsSet "DO_COMPACT"
 
 # in single repo mode, one repo is used for all volumes
 case "$SINGLE_REPO" in
@@ -59,29 +59,38 @@ if [ -n "$CUSTOM_PREFIX" ]; then
 fi
 
 # first time requires repo creation, borg has no built-in method for checking so we rely on unstable output
+echo "calling init if repo does not already exist"
+set +eo pipefail
 if ! borg $BORG_ARGS init -e "$ENCRYPTION" 2>&1 >/tmp/borg-init.log | tee -a /tmp/borg-init.log | grep -q "A repository already exists at"; then
 	cat /tmp/borg-init.log
 	echo "Could not check for existing repository"
 	exit 1
 fi
+set -eo pipefail
 
 # create a new archive
+echo "calling create"
 borg $BORG_ARGS create \
 	$CREATE_ARGS \
 	--list \
-	::"$VOLUME_PREFIX-$(date +%Y-%m-%d_%H-%M-%S)"
+	::"$VOLUME_PREFIX-$(date +%Y-%m-%d_%H-%M-%S)" \
+	.
 
 if [ -n "$PRUNE_ARGS" ]; then
 
+	echo "calling prune"
 	borg $BORG_ARGS prune \
 		$PRUNE_ARGS \
 		--list \
 		--show-rc \
-		--prefix "$VOLUME_PREFIX-"
+		--glob-archives "$VOLUME_PREFIX-*"
 
+	case "$DO_COMPACT" in
+		true|1|yes|y|on|enable)
+		echo "calling compact"
+		borg $BORG_ARGS compact \
+			--show-rc
+		;;
+	esac
 
-	borg $BORG_ARGS compact \
-		--list \
-		--show-rc \
-		--prefix "$VOLUME_PREFIX-"
 fi

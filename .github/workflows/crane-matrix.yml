@@ -10,8 +10,7 @@ on:
       - "master"
 
 env:
-  CRANE_DIR: "matrix-test"
-
+  CRANE_DIR: "cranes"
 
 # https://github.com/dorny/paths-filter#examples
 jobs:
@@ -31,8 +30,8 @@ jobs:
         uses: dorny/paths-filter@v2
         with:
           filters: |
-            project1: "${{ env.CRANE_DIR }}/project1/**"
-            project2: "${{ env.CRANE_DIR }}/project2/**"
+            dummy: "${{ env.CRANE_DIR }}/dummy/**"
+            borgbackup: "${{ env.CRANE_DIR }}/borgbackup/**"
 
   build-docker:
     name: Build crane images
