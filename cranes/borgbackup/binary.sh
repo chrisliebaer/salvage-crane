@@ -60,13 +60,15 @@ fi
 
 # first time requires repo creation, borg has no built-in method for checking so we rely on unstable output
 echo "calling init if repo does not already exist"
-set +eo pipefail
-if ! borg $BORG_ARGS init -e "$ENCRYPTION" 2>&1 >/tmp/borg-init.log | tee -a /tmp/borg-init.log | grep -q "A repository already exists at"; then
-	cat /tmp/borg-init.log
-	echo "Could not check for existing repository"
-	exit 1
+if ! borg $BORG_ARGS init -e "$ENCRYPTION" &> /tmp/borg-init.log; then
+	# init failed, but might be because repo already existed
+	
+	if ! grep -q "A repository already exists at" /tmp/borg-init.log; then
+		cat /tmp/borg-init.log
+		echo "Could not check for existing repository"
+		exit 1
+	fi
 fi
-set -eo pipefail
 
 # create a new archive
 echo "calling create"
