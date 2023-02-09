@@ -21,6 +21,8 @@ assertIsSet "SALVAGE_MACHINE_NAME"
 assertIsSet "SALVAGE_CRANE_NAME"
 assertIsSet "SALVAGE_VOLUME_NAME"
 
+echo "borg crane '$SALVAGE_CRANE_NAME' on machine '$SALVAGE_MACHINE_NAME' starting backup of volume '$SALVAGE_VOLUME_NAME'"
+
 export BORG_HOST_ID="${SALVAGE_MACHINE_NAME}-${SALVAGE_CRANE_NAME}-${SALVAGE_VOLUME_NAME}"
 
 # user config
@@ -60,7 +62,7 @@ fi
 
 # first time requires repo creation, borg has no built-in method for checking so we rely on unstable output
 echo "calling init if repo does not already exist"
-if ! borg $BORG_ARGS init -e "$ENCRYPTION" &> /tmp/borg-init.log; then
+if ! borg --show-rc $BORG_ARGS init -e "$ENCRYPTION" &> /tmp/borg-init.log; then
 	# init failed, but might be because repo already existed
 	
 	if ! grep -q "A repository already exists at" /tmp/borg-init.log; then
@@ -72,7 +74,7 @@ fi
 
 # create a new archive
 echo "calling create"
-borg $BORG_ARGS create \
+borg --show-rc $BORG_ARGS create \
 	$CREATE_ARGS \
 	--list \
 	::"$VOLUME_PREFIX-$(date +%Y-%m-%d_%H-%M-%S)" \
@@ -81,18 +83,16 @@ borg $BORG_ARGS create \
 if [ -n "$PRUNE_ARGS" ]; then
 
 	echo "calling prune"
-	borg $BORG_ARGS prune \
+	borg --show-rc $BORG_ARGS prune \
 		$PRUNE_ARGS \
 		--list \
-		--show-rc \
 		--glob-archives "$VOLUME_PREFIX-*"
 
 	case "$DO_COMPACT" in
 		true|1|yes|y|on|enable)
 		echo "calling compact"
-		borg $BORG_ARGS compact \
-			--show-rc
 		;;
+		borg --show-rc $BORG_ARGS compact
 	esac
 
 fi
