@@ -91,8 +91,8 @@ if [ -n "$PRUNE_ARGS" ]; then
 	case "$DO_COMPACT" in
 		true|1|yes|y|on|enable)
 		echo "calling compact"
-		;;
 		borg --show-rc $BORG_ARGS compact
+		;;
 	esac
 
 fi
