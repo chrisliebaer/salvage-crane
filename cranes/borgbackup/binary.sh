@@ -67,7 +67,7 @@ if ! borg --show-rc $BORG_ARGS init -e "$ENCRYPTION" &> /tmp/borg-init.log; then
 	
 	if ! grep -q "A repository already exists at" /tmp/borg-init.log; then
 		cat /tmp/borg-init.log
-		echo "Repo did not exist but init failed"
+		echo "Could not check for existing repository"
 		exit 1
 	fi
 fi
